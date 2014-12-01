@@ -1,5 +1,3 @@
-package org.jsoup;
-
 import java.io.BufferedReader;
 import java.io.IOError;
 import java.io.IOException;
@@ -11,6 +9,9 @@ import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 /**
  * @author peanut
@@ -45,30 +46,37 @@ public class WebGraph {
 	 * Explore the web starting from root
 	 * @throws IOException 
 	 */
-	public void startExplore() throws IOException{
-		explore( root );
+	public void startExplore(int maxDepth) throws IOException{
+		explore( root, maxDepth );
 	}
 	
 	/**
 	 * Explore the web starting from a certain website
 	 * @param start: the start point node
+	 * @param maxDepth: maximum depth of the recursion (if 0, exploration stops)
 	 * @throws IOException : in case of error in connection
 	 */
-	public void explore( Website start ) throws IOException{
-		ArrayList<Website> toExplore;
+	public void explore( Website start, int maxDepth ) throws IOException{
+		ArrayList<Website> toExplore = null;
 		do{
-			toExplore = crawlOneSite( start );
-			for(Website current : toExplore){
-				System.out.println( "Exploring: " + current );
-				explore( current );
+			try{
+				if(maxDepth < 0)
+					return;
+				System.out.println( "\n("+maxDepth+"): Exploring: " + start );
+				toExplore = crawlOneSite( start );
+				for(Website current : toExplore){
+					explore( current, maxDepth-1 );
+				}
+			} catch (IOException E){
+				System.out.println("! Encountered error: "+E);
 			}
-		} while( !toExplore.isEmpty() );
+		} while( toExplore!=null && !toExplore.isEmpty() && maxDepth>0 );
 	}
 	
 	/**
-	 * Crawl the web html at a url to get hyperlonks from it
+	 * Crawl the web html at a url to get hyperlinks from it
 	 * @param start: the start point to crawl from
-	 * @return an arraylist containing all sites newly explored
+	 * @return an arraylist containing all sites newly discovered (to be crawled)
 	 * @throws IOException: if a web-related exception occurs
 	 */
 	public ArrayList<Website> crawlOneSite( Website start ) throws IOException{
@@ -101,21 +109,16 @@ public class WebGraph {
 	 */
 	private ArrayList<Website> crawlHTML( Website node, String html ) throws MalformedURLException{
 		ArrayList<Website> discovered = new ArrayList<Website>();
-		ArrayList<String> links = new ArrayList<String>();
-		
-/*		// The HTML page as a String (thanks http://stackoverflow.com/questions/5120171/extract-links-from-a-web-page)
-		Pattern linkPattern = Pattern.compile("(<a[^>]+>.+?</a>)",  Pattern.CASE_INSENSITIVE|Pattern.DOTALL);
-		Matcher pageMatcher = linkPattern.matcher(html);
-		ArrayList<String> links = new ArrayList<String>();
-		while(pageMatcher.find()){
-		    links.add(pageMatcher.group());
-		}
-		*/
 		
 		Document doc = Jsoup.parse( html, node.url.toString() );
+		Elements elinks = doc.select("a[href]");
 		
 		// crawl every link 
-		for(String url: links){
+		for(Element clink: elinks){
+			String url = clink.attr("abs:href");
+			System.out.println("Found url: \""+url+"\"");
+			
+			if(url.isEmpty()){ continue;}
 			URL link = new URL( url );
 			// find the link in allsites
 			Website cnode = null;
@@ -127,8 +130,10 @@ public class WebGraph {
 			}
 			// if new, add to discovered array list
 			if(cnode == null){
+				System.out.println("* NEW URL: \""+url+"\"");
 				cnode = new Website(link);
 				discovered.add(cnode);
+				allsites.add(cnode);
 			}
 			// anyway, add as neighbor to the current site
 			node.addNeighbor(cnode);
@@ -137,6 +142,7 @@ public class WebGraph {
 		node.setExplored(true);
 		return discovered;
 	}
+
 
 	
 	// file IO METHODS
@@ -162,6 +168,11 @@ public class WebGraph {
 	// Graph specific methods
 	public Website getRoot(){
 		return root;
+	}
+	
+	public String toString(){
+		return "WEBGRAPH of root = \""+this.root+"\"\n"+
+				"            size = "+this.allsites.size();
 	}
 
 }

@@ -4,11 +4,13 @@
  */
 public class Main {
 	public static void main(String[] args){
+		WebGraph graph=null;
 		try{
-			WebGraph graph = new WebGraph("http://www.explosm.net");
-			graph.startExplore();
+			graph = new WebGraph("http://www.apple.com");
+			graph.startExplore(1);
 		} catch( Exception e ){
 			e.printStackTrace();
 		}
+		System.out.println("\n\nFinal Graph: "+graph);
 	}
 }

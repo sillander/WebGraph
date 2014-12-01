@@ -39,7 +39,12 @@ public class Website implements Comparable<Website>{
 	}
 	
 	public boolean equals(URL other){
-		return other.equals(url);
+		return other.toString().equals(url.toString());
+	}
+	
+	@Override 
+	public boolean equals(Object other){
+		return this.url.toString().equals(((Website)other).url.toString());
 	}
 	
 	public URL getUrl(){
