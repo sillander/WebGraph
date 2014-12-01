@@ -1,13 +1,13 @@
 import java.io.BufferedReader;
-import java.io.IOError;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Hashtable;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -35,8 +35,17 @@ public class WebGraph {
 	 * @param url: the root of the graph
 	 */
 	public WebGraph( URL url ){
-		root = new Website( url );
+		this( new Website( url ) );
+	}
+	
+	/**
+	 * Create a web graph with given root
+	 * @param root: the root of the graph
+	 */
+	public WebGraph( Website root ){
+		this.root = root;
 		allsites = new ArrayList<Website>();
+		allsites.add(root);
 	}
 	
 	
@@ -149,27 +158,96 @@ public class WebGraph {
 	
 	/**
 	 * Write this graph to a file
-	 * @throws IOError in case of input error
+	 * @param filename: the file to which to write
+	 * @throws IOException in case of input error
 	 */
-	public void writeToFile() throws IOError{
-		// TODO
+	public void writeToFile(String filename) throws IOException{
+		FileWriter file = new FileWriter( filename );
+		Hashtable<String, Integer> table = new Hashtable<String, Integer>();
+		int index = 0;
+		// write sites
+		for(Website site : allsites){
+			table.put(site.toString(), index);
+			file.write(site.toCleverString()+"\n");
+			index ++;
+		}
+		// write links
+		file.write("\n");
+		for(Website site : allsites){
+			int i = table.get( site.toString() );
+			for(Website linked : site.getNeighbors()){
+				int j = table.get( linked.toString() );
+				file.write(i+" "+j+"\n");
+			}
+		}
+		// close file
+		file.close();
 	}
 	
 	/**
 	 * Read a file containing a graph
+	 * @param filename: the file from which to read
 	 * @return the web graph
-	 * @throws IOError in case of input error
+	 * @throws IOException in case of input error
 	 */
-	public static WebGraph readFromFile( ) throws IOError{
-		return null; // TODO
+	public static WebGraph readFromFile(String filename) throws IOException{
+		BufferedReader file = new BufferedReader( new FileReader(filename) ) ;
+		Hashtable<Integer, Website> table = new Hashtable<Integer, Website>();
+		// read root from file
+		String line = file.readLine();
+		Website root = Website.fromCleverString(line);
+		WebGraph result = new WebGraph(root);
+		table.put(0, result.getRoot());
+		// read all sites
+		int index = 1;
+		do{
+			line = file.readLine();
+			if(line.isEmpty()){
+				break;
+			}
+			Website site = Website.fromCleverString(line);
+			table.put(index, site);
+			result.allsites.add(site);
+			index++;
+		} while( line!=null && !line.isEmpty() );
+		// read all links
+		do{
+			line = file.readLine();
+			String[] elements = line.split(" ");
+			int source, dest;
+			try{
+				source = Integer.parseInt(elements[0]);
+				dest   = Integer.parseInt(elements[1]);
+			} catch( NumberFormatException E ){
+				continue;
+			}
+			table.get(source).neighbors.add( table.get(dest) );
+		} while( line!=null && !line.isEmpty() );
+		// return the built webgraph
+		return result;
 	}
 
 	
 	// Graph specific methods
+	
+	/**
+	 * Returns the root of this graph
+	 */
 	public Website getRoot(){
 		return root;
 	}
 	
+	/**
+	 * Add a website to this graph
+	 * @param site: the website to add
+	 */
+	public void addWebsite( Website site ){
+		allsites.add(site);
+	}
+	
+	/**
+	 * Quick display of information for this graph
+	 */
 	public String toString(){
 		return "WEBGRAPH of root = \""+this.root+"\"\n"+
 				"            size = "+this.allsites.size();

@@ -1,3 +1,4 @@
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 
@@ -70,6 +71,24 @@ public class Website implements Comparable<Website>{
 	
 	public String toString(){
 		return url.toString();
+	}
+	
+	/**
+	 * Returns a string holding all the information
+	 */
+	public String toCleverString(){
+		return (this.explored?'0':'1') + this.toString();
+	}
+	
+	/**
+	 * Create a website from a clever string
+	 * @param s: clever string holding information for the website
+	 * @throws MalformedURLException
+	 */
+	public static Website fromCleverString(String s) throws MalformedURLException{
+		Website result = new Website( new URL(s.substring(1)) );
+		result.setExplored(s.charAt(0) == '1');
+		return result;
 	}
 	
 }
