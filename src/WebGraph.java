@@ -1,3 +1,5 @@
+package org.jsoup;
+
 import java.io.BufferedReader;
 import java.io.IOError;
 import java.io.IOException;
@@ -8,6 +10,7 @@ import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.jsoup.Jsoup;
 
 /**
  * @author peanut
@@ -98,14 +101,18 @@ public class WebGraph {
 	 */
 	private ArrayList<Website> crawlHTML( Website node, String html ) throws MalformedURLException{
 		ArrayList<Website> discovered = new ArrayList<Website>();
+		ArrayList<String> links = new ArrayList<String>();
 		
-		// The HTML page as a String (thanks http://stackoverflow.com/questions/5120171/extract-links-from-a-web-page)
+/*		// The HTML page as a String (thanks http://stackoverflow.com/questions/5120171/extract-links-from-a-web-page)
 		Pattern linkPattern = Pattern.compile("(<a[^>]+>.+?</a>)",  Pattern.CASE_INSENSITIVE|Pattern.DOTALL);
 		Matcher pageMatcher = linkPattern.matcher(html);
 		ArrayList<String> links = new ArrayList<String>();
 		while(pageMatcher.find()){
 		    links.add(pageMatcher.group());
 		}
+		*/
+		
+		Document doc = Jsoup.parse( html, node.url.toString() );
 		
 		// crawl every link 
 		for(String url: links){
