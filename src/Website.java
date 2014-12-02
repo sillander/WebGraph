@@ -77,7 +77,7 @@ public class Website implements Comparable<Website>{
 	 * Returns a string holding all the information
 	 */
 	public String toCleverString(){
-		return (this.explored?'0':'1') + this.toString();
+		return (this.explored?'1':'0') + this.toString();
 	}
 	
 	/**

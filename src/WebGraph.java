@@ -59,6 +59,8 @@ public class WebGraph {
 		explore( root, maxDepth );
 	}
 	
+	//public void continueExplore
+	
 	/**
 	 * Explore the web starting from a certain website
 	 * @param start: the start point node
@@ -66,6 +68,9 @@ public class WebGraph {
 	 * @throws IOException : in case of error in connection
 	 */
 	public void explore( Website start, int maxDepth ) throws IOException{
+		if(start.isExplored()){
+			return ;
+		}
 		ArrayList<Website> toExplore = null;
 		do{
 			try{
@@ -73,6 +78,7 @@ public class WebGraph {
 					return;
 				System.out.println( "\n("+maxDepth+"): Exploring: " + start );
 				toExplore = crawlOneSite( start );
+				start.setExplored(true);
 				for(Website current : toExplore){
 					explore( current, maxDepth-1 );
 				}
@@ -206,6 +212,7 @@ public class WebGraph {
 				break;
 			}
 			Website site = Website.fromCleverString(line);
+			System.out.println("read: "+site);
 			table.put(index, site);
 			result.allsites.add(site);
 			index++;
@@ -213,17 +220,22 @@ public class WebGraph {
 		// read all links
 		do{
 			line = file.readLine();
+			if(line == null){
+				break;
+			}
 			String[] elements = line.split(" ");
 			int source, dest;
 			try{
 				source = Integer.parseInt(elements[0]);
 				dest   = Integer.parseInt(elements[1]);
 			} catch( NumberFormatException E ){
+				System.out.println("Bad format: \""+line+"\"");
 				continue;
 			}
 			table.get(source).neighbors.add( table.get(dest) );
 		} while( line!=null && !line.isEmpty() );
 		// return the built webgraph
+		file.close();
 		return result;
 	}
 
