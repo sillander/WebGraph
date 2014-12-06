@@ -8,9 +8,10 @@ public class Main {
 	public static void main(String[] args){
 		WebGraph graph=null;
 		try{
-			graph = new WebGraph("http://www.wikipedia.org");
-			graph.startExplore(2);
-			//graph = graph.readFromFile("applegraph.grp");
+			graph = new WebGraph("http://www.explosm.net");
+			graph.addRestriction("explosm");
+			graph.startExplore(10);
+			graph = graph.readFromFile("explosm.grp");
 		} catch( Exception e ){
 			e.printStackTrace();
 		}

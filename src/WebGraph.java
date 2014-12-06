@@ -21,6 +21,8 @@ public class WebGraph {
 	private Website root;
 	public ArrayList<Website> allsites;
 	
+	private ArrayList<String> restrictions;
+	
 	/**
 	 * Create a web graph building the url from string
 	 * @param url: a string giving url of the root
@@ -46,6 +48,34 @@ public class WebGraph {
 		this.root = root;
 		allsites = new ArrayList<Website>();
 		allsites.add(root);
+		restrictions = new ArrayList<String>();
+	}
+	
+	/**
+	 * Add a restriction domain to this graph, that is, a keyword which must be found in every kept url.
+	 * By default, there is no restriction
+	 * @param s: the restriction to add
+	 */
+	public void addRestriction(String s){
+		restrictions.add(s);
+	}
+	
+	/**
+	 * Checks if a given url (as a string) matches the restriction imposed to this graph
+	 * @param url: the url to check
+	 * @return true if this url is valid in this graph
+	 */
+	public boolean matchesRestrictions( String url ){
+		if(restrictions.isEmpty())
+			return true;
+		// if not empty, make sure one filter is ok
+		boolean found1ok = false;
+		for(int i=0; !found1ok && i<restrictions.size(); i++){
+			String filter = restrictions.get(i);
+			found1ok = url.contains(filter);
+		}
+		// if empty or not found
+		return found1ok;
 	}
 	
 	
@@ -72,20 +102,28 @@ public class WebGraph {
 			return ;
 		}
 		ArrayList<Website> toExplore = null;
+		boolean stillSthToExplore;
 		do{
+			stillSthToExplore = false; // expect nothing is to be explored
 			try{
 				if(maxDepth < 0)
 					return;
 				System.out.println( "\n("+maxDepth+"): Exploring: " + start );
 				toExplore = crawlOneSite( start );
 				start.setExplored(true);
+				if(!toExplore.isEmpty()){
+					stillSthToExplore = true; // there still are some sites out there!
+				}
 				for(Website current : toExplore){
 					explore( current, maxDepth-1 );
 				}
 			} catch (IOException E){
 				System.out.println("! Encountered error: "+E);
 			}
-		} while( toExplore!=null && !toExplore.isEmpty() && maxDepth>0 );
+		} while( toExplore!=null && stillSthToExplore && !toExplore.isEmpty() && maxDepth>0 );
+		if(!stillSthToExplore){
+			System.out.println("The web was explored!");
+		}
 	}
 	
 	/**
@@ -133,7 +171,10 @@ public class WebGraph {
 			String url = clink.attr("abs:href");
 			System.out.println("Found url: \""+url+"\"");
 			
-			if(url.isEmpty()){ continue;}
+			if(!matchesRestrictions(url)){
+				System.out.println("- IGNORED URL: \""+url+"\"");
+				continue; // this url is ignored
+			}
 			URL link = new URL( url );
 			// find the link in allsites
 			Website cnode = null;
